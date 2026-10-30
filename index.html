@@ -162,13 +162,36 @@
                 </div>
 
                 <!-- Retro Hit Counter -->
-                <div class="bg-black text-white p-2 bevel-inset text-center space-y-1">
-                    <div class="text-[10px] font-mono text-gray-400">VISITOR COUNTER</div>
-                    <div class="inline-block bg-black border-2 border-gray-600 px-2 py-0.5 font-mono text-green-400 text-lg font-bold tracking-widest">
-                        007
-                    </div>
-                    <div class="text-[9px] text-yellow-300">SERVED BY CITIESITES</div>
-                </div>
+               <!-- Real-Time Visitor Counter -->
+<div class="bg-black text-white p-2 bevel-inset text-center space-y-1">
+    <div class="text-[10px] font-mono text-gray-400">VISITOR COUNTER</div>
+    <div id="visitor-count-display" class="inline-block bg-black border-2 border-gray-600 px-2 py-0.5 font-mono text-green-400 text-lg font-bold tracking-widest">
+        000000
+    </div>
+    <div class="text-[9px] text-yellow-300">SERVED BY CITIESITES</div>
+</div>
+
+<script>
+    // Fetch and increment real-time visitor count using CountAPI
+    document.addEventListener("DOMContentLoaded", function() {
+        const namespace = "roshishdahal.com.np";
+        const key = "visits";
+        
+        fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.value) {
+                    // Format count as 6-digit padded string (e.g., 000142)
+                    const formattedCount = String(data.value).padStart(6, '0');
+                    document.getElementById("visitor-count-display").innerText = formattedCount;
+                }
+            })
+            .catch(err => {
+                // Fallback display if API fails
+                document.getElementById("visitor-count-display").innerText = "000001";
+            });
+    });
+</script>
 
                 <!-- Classic Web Badges -->
                 <div class="bg-[#d4d0c8] p-2 bevel-outset text-center space-y-1">
