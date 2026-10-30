@@ -327,30 +327,111 @@
                     </div>
                 </section>
 
-                <!-- Guestbook Form (Retro Feature) -->
-                <section id="guestbook" class="bg-[#d4d0c8] p-3 bevel-outset space-y-2">
-                    <div class="bg-[#000080] text-white px-2 py-0.5 font-bold font-mono text-xs">
-                        📝 PUBLIC GUESTBOOK & COMMENTS
-                    </div>
-                    <form onsubmit="event.preventDefault(); addGuestbookEntry();" class="space-y-2 text-xs font-mono">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div>
-                                <label class="block mb-1">Your Name / Handle:</label>
-                                <input id="gb-name" type="text" required class="w-full p-1 bevel-inset bg-white" placeholder="WebSurfer99">
-                            </div>
-                            <div>
-                                <label class="block mb-1">Location / Website:</label>
-                                <input id="gb-site" type="text" class="w-full p-1 bevel-inset bg-white" placeholder="http://geocities.com/...">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block mb-1">Message for Roshish:</label>
-                            <textarea id="gb-msg" required rows="2" class="w-full p-1 bevel-inset bg-white" placeholder="Great website! Greetings from CyberSpace!"></textarea>
-                        </div>
-                        <button type="submit" class="px-3 py-1 bg-[#c0c0c0] bevel-outset hover:bg-gray-300 font-bold active:bevel-inset">
-                            Submit Guestbook Entry
-                        </button>
-                    </form>
+               <!-- Guestbook Form (Retro Feature) -->
+<section id="guestbook" class="bg-[#d4d0c8] p-3 bevel-outset space-y-2">
+    <div class="bg-[#000080] text-white px-2 py-0.5 font-bold font-mono text-xs">
+        📝 PUBLIC GUESTBOOK & COMMENTS
+    </div>
+    
+    <!-- Active Submission Form -->
+    <form id="guestbook-form" action="https://formspree.io/f/mnqrlbdn" method="POST" onsubmit="handleGuestbookSubmit(event)" class="space-y-2 text-xs font-mono">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+                <label class="block mb-1">Your Name / Handle:</label>
+                <input id="gb-name" name="name" type="text" required class="w-full p-1 bevel-inset bg-white" placeholder="WebSurfer99">
+            </div>
+            <div>
+                <label class="block mb-1">Location / Website:</label>
+                <input id="gb-site" name="website" type="text" class="w-full p-1 bevel-inset bg-white" placeholder="http://geocities.com/...">
+            </div>
+        </div>
+        <div>
+            <label class="block mb-1">Message for Roshish:</label>
+            <textarea id="gb-msg" name="message" required rows="2" class="w-full p-1 bevel-inset bg-white" placeholder="Great website! Greetings from CyberSpace!"></textarea>
+        </div>
+        <button id="gb-submit-btn" type="submit" class="px-3 py-1 bg-[#c0c0c0] bevel-outset hover:bg-gray-300 font-bold active:bevel-inset">
+            Submit Guestbook Entry
+        </button>
+    </form>
+
+    <!-- Guestbook Entries Feed -->
+    <div class="mt-4 pt-2 border-t border-gray-400 font-mono text-xs">
+        <div class="font-bold mb-2">Recent Guestbook Entries:</div>
+        <div id="guestbook-list" class="space-y-2 max-h-48 overflow-y-auto">
+            <!-- Saved local/submitted entries will render here -->
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderGuestbookEntries();
+    });
+
+    async function handleGuestbookSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const btn = document.getElementById('gb-submit-btn');
+        btn.disabled = true;
+        btn.innerText = "Transmitting...";
+
+        const name = document.getElementById('gb-name').value;
+        const site = document.getElementById('gb-site').value || 'CyberSpace';
+        const msg = document.getElementById('gb-msg').value;
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                saveGuestbookEntryLocally({ name, site, msg, date: new Date().toLocaleDateString() });
+                form.reset();
+                alert("Thank you! Your guestbook entry has been signed.");
+            } else {
+                alert("Transmission failed. Please try again.");
+            }
+        } catch (error) {
+            alert("Error sending guestbook entry.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Submit Guestbook Entry";
+        }
+    }
+
+    function saveGuestbookEntryLocally(entry) {
+        let entries = JSON.parse(localStorage.getItem('guestbook_entries') || '[]');
+        entries.unshift(entry);
+        localStorage.setItem('guestbook_entries', JSON.stringify(entries));
+        renderGuestbookEntries();
+    }
+
+    function renderGuestbookEntries() {
+        const listContainer = document.getElementById('guestbook-list');
+        let entries = JSON.parse(localStorage.getItem('guestbook_entries') || '[]');
+        
+        if (entries.length === 0) {
+            listContainer.innerHTML = '<div class="text-gray-500 italic">No entries yet. Be the first to sign!</div>';
+            return;
+        }
+
+        listContainer.innerHTML = entries.map(item => `
+            <div class="p-2 bg-white bevel-inset border border-gray-300">
+                <div class="font-bold text-[#000080]">
+                    ${escapeHtml(item.name)} <span class="font-normal text-gray-500">from (${escapeHtml(item.site)})</span>
+                    <span class="float-right text-[10px] text-gray-400">${item.date || ''}</span>
+                </div>
+                <div class="mt-1 text-gray-800">${escapeHtml(item.msg)}</div>
+            </div>
+        `).join('');
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+</script>
 
                     <!-- Entries List -->
                     <div id="guestbook-entries" class="space-y-2 pt-2 border-t border-gray-400">
