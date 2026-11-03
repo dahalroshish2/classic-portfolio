@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://roshishdahal.com.np/sitemap.xml
